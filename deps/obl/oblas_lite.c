@@ -47,12 +47,23 @@ static void obl_scal_ref(u8 *a, u8 *b, u8 u, unsigned k)
 }
 #endif
 
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+
 void obl_axpyb32_ref(u8 *a, u32 *b, u8 u, unsigned k)
 {
     for (unsigned idx = 0, p = 0; idx < k; idx += 8 * sizeof(u32), p++) {
         u32 tmp = b[p];
         while (tmp > 0) {
+#ifdef _MSC_VER
+            // No need to initialize tz or check the return value
+            // because tmp is guaranteed to be non-zero.
+            unsigned long tz;
+            _BitScanForward(&tz, tmp);
+#else
             unsigned tz = __builtin_ctz(tmp);
+#endif
             tmp = tmp & (tmp - 1);
             a[tz + idx] ^= u;
         }
